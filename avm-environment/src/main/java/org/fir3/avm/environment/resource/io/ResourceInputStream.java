@@ -1,8 +1,6 @@
 package org.fir3.avm.environment.resource.io;
 
-import org.fir3.avm.environment.resource.Chunk;
-import org.fir3.avm.environment.resource.ChunkHeader;
-import org.fir3.avm.environment.resource.ResourceType;
+import org.fir3.avm.environment.resource.*;
 import org.fir3.avm.environment.util.CollectionUtil;
 import org.fir3.avm.environment.util.StreamUtil;
 
@@ -10,16 +8,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
-public class ResourceInputStream extends InputStream {
-    private final LEInputStream source;
-
+public class ResourceInputStream extends BaseInputStream<LEInputStream> {
     public ResourceInputStream(InputStream src) {
-        this.source = new LEInputStream(src);
-    }
-
-    @Override
-    public int read() throws IOException {
-        return this.source.read();
+        super(new LEInputStream(src));
     }
 
     private ChunkHeader readChunkHeader() throws IOException {
@@ -102,5 +93,14 @@ public class ResourceInputStream extends InputStream {
         // Construct the final chunk
 
         return new Chunk(header, data);
+    }
+
+    public Value readValue() throws IOException {
+        int size = this.source.readUint16();
+        short res0 = this.source.readUint8();
+        Set<ValueType> dataType = ValueType.getTypes(this.source.readUint8());
+        long data = this.source.readUint32();
+
+        return new Value(size, res0, dataType, data);
     }
 }

@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.HashSet;
 import java.util.Set;
 
-enum ValueType {
+public enum ValueType {
     NULL(0x00),
     REFERENCE(0x01),
     ATTRIBUTE(0x02),
@@ -32,7 +32,7 @@ enum ValueType {
         this.id = id;
     }
 
-    static Set<ValueType> getTypes(int id) {
+    public static Set<ValueType> getTypes(int id) {
         Set<ValueType> result = new HashSet<>(2);
 
         for (ValueType type : ValueType.values()) {

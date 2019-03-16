@@ -6,20 +6,14 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class LEInputStream extends InputStream {
-    private final DataInputStream source;
+public class LEInputStream extends BaseInputStream<DataInputStream> {
     private final ByteBuffer swapBuffer;
 
     public LEInputStream(InputStream src) {
-        this.source = new DataInputStream(src);
+        super(new DataInputStream(src));
 
         this.swapBuffer = ByteBuffer.allocate(4);
         this.swapBuffer.order(ByteOrder.LITTLE_ENDIAN);
-    }
-
-    @Override
-    public int read() throws IOException {
-        return this.source.read();
     }
 
     public short readUint8() throws IOException {

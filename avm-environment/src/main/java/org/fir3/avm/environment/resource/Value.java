@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.Set;
 
 @Data
-class Value {
+public class Value {
     private final int size;
     private final short res0;
     private final Set<ValueType> dataType;
