@@ -2,11 +2,10 @@ package org.fir3.avm.environment.resource;
 
 import lombok.Data;
 import lombok.extern.java.Log;
-import org.fir3.avm.environment.resource.io.LEInputStream;
 import org.fir3.avm.environment.resource.io.ResourceInputStream;
+import org.fir3.avm.environment.resource.io.StringInputStream;
 import org.fir3.avm.environment.resource.io.XmlInputStream;
 import org.fir3.avm.environment.util.CollectionUtil;
-import org.fir3.avm.environment.util.StreamUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -15,7 +14,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -117,70 +115,9 @@ public class Chunk {
     public StringPool getStringPool() throws IOException {
         this.expectType(ResourceType.StringPool);
 
-        // NOTE: At the moment this implementation ignores everything besides a string index and the string itself,
-        //       maybe we should implement the rest in the future (if required).
-
-        ChunkHeader.StringPoolHeader header = (ChunkHeader.StringPoolHeader) this.header;
-
-        // Create the array that will contain the decoded strings
-
-        long stringCount = header.getStringCount();
-
-        if (stringCount > Integer.MAX_VALUE) {
-            throw new UnsupportedOperationException("Cannot have more strings in a string pool than a signed integer " +
-                    "is large!");
+        try (StringInputStream in = new StringInputStream(new ByteArrayInputStream(this.data))) {
+            return in.readStringPool((ChunkHeader.StringPoolHeader) this.header);
         }
-
-        String[] strings = new String[(int) stringCount];
-
-        // Decode the strings
-
-        try (LEInputStream indexStream = new LEInputStream(new ByteArrayInputStream(this.data))) {
-            for (int i = 0; i < strings.length; i++) {
-                long index = indexStream.readUint32();
-
-                if (index > Integer.MAX_VALUE) {
-                    throw new UnsupportedOperationException("Indices greater than singed integer are not supported!");
-                }
-
-                // Calculate the string's offset and the remaining bytes in the data array
-
-                int offset = (int) (header.getStringsStart() - header.getHeaderSize() + index);
-                int remaining = this.data.length - offset;
-
-                // Read and decode the string data
-
-                try (LEInputStream stringStream = new LEInputStream(new ByteArrayInputStream(this.data, offset,
-                        remaining))) {
-                    // Determine the length of the final string
-
-                    int length = stringStream.readUint16();
-
-                    if ((length & 0x8000) == 0x8000) {
-                        length &= 0x7FFF;
-                        length <<= 16;
-                        length |= stringStream.readUint16();
-                    }
-
-                    // Read the string's bytes from the stream (UTF-16 encoded)
-
-                    byte[] data = new byte[length * 2];
-                    StreamUtil.readFully(stringStream, data);
-
-                    // Expecting two zero bytes
-
-                    if (stringStream.readUint16() != 0x0000) {
-                        throw new IOException("Expected string terminator!");
-                    }
-
-                    // Decode the string data
-
-                    strings[i] = new String(data, StandardCharsets.UTF_16LE);
-                }
-            }
-        }
-
-        return new StringPool(strings);
     }
 
     public XmlTreeNode getXmlTreeNode(StringPool strings) throws IOException {

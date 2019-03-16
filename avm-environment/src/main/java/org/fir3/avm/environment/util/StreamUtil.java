@@ -18,4 +18,26 @@ public class StreamUtil {
             offset += bytes;
         }
     }
+
+    public static void skipFully(InputStream stream, long bytes) throws IOException {
+        if (bytes < 0) {
+            throw new IllegalArgumentException("Cannot skip backwards!");
+        }
+
+        int totalSkipped = 0, escalation = 0;
+
+        do {
+            long skipped = stream.skip(bytes);
+
+            if (skipped == 0) {
+                escalation++;
+            }
+
+            totalSkipped += skipped;
+
+            if (escalation > 3) {
+                throw new IOException("Cannot skip anymore!");
+            }
+        } while (totalSkipped < bytes);
+    }
 }
