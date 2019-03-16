@@ -5,6 +5,7 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import lombok.extern.java.Log;
 import org.fir3.avm.environment.AppContainer;
+import org.fir3.avm.environment.resource.io.ResourceInputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,10 @@ public class App {
 
         try {
             container = new AppContainer(optApkFiles.value(options));
+
+            try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("AndroidManifest.xml"))) {
+                System.out.println(stream.readChunk().getDocument());
+            }
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
             return;
