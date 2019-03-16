@@ -4,10 +4,10 @@ import lombok.Data;
 import lombok.extern.java.Log;
 import org.fir3.avm.environment.resource.io.LEInputStream;
 import org.fir3.avm.environment.resource.io.ResourceInputStream;
+import org.fir3.avm.environment.resource.io.XmlInputStream;
 import org.fir3.avm.environment.util.CollectionUtil;
 import org.fir3.avm.environment.util.StreamUtil;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -16,8 +16,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.logging.Level;
+import java.util.Arrays;
+import java.util.Set;
 
 @Data
 @Log
@@ -37,6 +37,11 @@ public class Chunk {
             return Util.documentBuilder;
         }
     }
+
+    private static final ResourceType[] NODE_TYPES = new ResourceType[] {
+            ResourceType.XmlFirstChunk, ResourceType.XmlStartNamespace, ResourceType.XmlEndNamespace,
+            ResourceType.XmlStartElement, ResourceType.XmlEndElement, ResourceType.XmlCdata
+    };
 
     private final ChunkHeader header;
     private final byte[] data;
@@ -81,45 +86,28 @@ public class Chunk {
 
                 ResourceType type = CollectionUtil.getFirst(types);
 
-                switch (type) {
-                    case StringPool:
-                        if (strings != null) {
-                            throw new UnsupportedOperationException("No more than one StringPool is supported!");
-                        }
+                if (type == ResourceType.StringPool) {
+                    if (strings != null) {
+                        throw new UnsupportedOperationException("No more than one StringPool is supported!");
+                    }
 
-                        strings = chunk.getStringPool();
-                        break;
-
-                    case XmlResourceMap:
-                        log.info("Ignoring XmlResourceMap chunk (not implemented)");
-                        break;
-
-                    case XmlFirstChunk:
-                    case XmlStartNamespace:
-                    case XmlEndNamespace:
-                        // TODO: Implementation
-                        log.log(Level.INFO, "Ignoring namespace: {0}", chunk.getTreeNode(strings));
-                        break;
-
-                    case XmlStartElement:
-                        XmlTreeNode.XmlTreeStartElement treeNode = (XmlTreeNode.XmlTreeStartElement) chunk.getTreeNode(strings);
-                        Element element = result.createElement(treeNode.getName());
-
-                        currentNode.appendChild(element);
-                        currentNode = element;
-                        break;
-
-                    case XmlEndElement:
-                        currentNode = currentNode.getParentNode();
-                        break;
-
-                    case XmlCdata:
-                        System.out.println(chunk.getTreeNode(strings));
-                        break;
-
-                    default:
-                        throw new IOException("Unexpected resource type: " + type);
+                    strings = chunk.getStringPool();
+                    continue;
                 }
+
+                if (type == ResourceType.XmlResourceMap) {
+                    log.info("Ignoring XmlResourceMap chunk (not implemented)");
+                    continue;
+                }
+
+                if (Arrays.binarySearch(Chunk.NODE_TYPES, type) >= 0) {
+                    XmlTreeNode node = chunk.getXmlTreeNode(strings);
+
+                    System.out.println(node);
+                    continue;
+                }
+
+                throw new IOException("Unexpected resource type: " + type);
             }
         }
 
@@ -195,94 +183,22 @@ public class Chunk {
         return new StringPool(strings);
     }
 
-    private void expectType(ResourceType type) throws IOException {
-        if (this.header.getType().contains(type)) {
+    public XmlTreeNode getXmlTreeNode(StringPool strings) throws IOException {
+        this.expectType(Chunk.NODE_TYPES);
+
+        try (XmlInputStream in = new XmlInputStream(new ByteArrayInputStream(this.data), strings)) {
+            return in.readTreeNode((ChunkHeader.XmlTreeNodeHeader) this.header);
+        }
+    }
+
+    private void expectType(ResourceType... types) throws IOException {
+        ResourceType firstType = CollectionUtil.getFirst(this.header.getType());
+
+        if (Arrays.binarySearch(types, firstType) >= 0) {
             return;
         }
 
-        throw new IOException("Expected resource of type: " + type + ", actual type: "
+        throw new IOException("Expected resource of type: " + Arrays.toString(types) + ", actual type: "
                 + Arrays.toString(this.header.getType().toArray()));
-    }
-
-    private XmlTreeNode getTreeNode(StringPool strings) throws IOException {
-        ChunkHeader.XmlTreeNodeHeader header = (ChunkHeader.XmlTreeNodeHeader) this.header;
-
-        // Get the common information from the header
-
-        long lineNumber = header.getLineNumber();
-        String comment = strings.getReference(header.getComment());
-
-        // Read the type-specific data and create the result instance
-
-        ResourceType type = CollectionUtil.getFirst(header.getType());
-        XmlTreeNode result;
-
-        try (LEInputStream in = new LEInputStream(new ByteArrayInputStream(this.data))) {
-            // Definitions of fields that will be used in different cases of the switch block
-
-            String ns, name;
-
-            switch (type) {
-                case XmlFirstChunk:
-                case XmlStartNamespace:
-                case XmlEndNamespace:
-                    String prefix = strings.getReference(in.readUint32());
-                    String uri = strings.getReference(in.readUint32());
-
-                    result = new XmlTreeNode.XmlTreeNamespace(lineNumber, comment, prefix, uri);
-                    break;
-
-                case XmlStartElement:
-                    ns = strings.getReference(in.readUint32());
-                    name = strings.getReference(in.readUint32());
-                    int attributeStart = in.readUint16();
-                    int attributeSize = in.readUint16();
-                    int attributeCount = in.readUint16();
-                    int idIndex = in.readUint16();
-                    int classIndex = in.readUint16();
-                    int styleIndex = in.readUint16();
-
-                    // Decode the attributes
-
-                    List<XmlTreeAttribute> attributes = new ArrayList<>(attributeCount);
-
-                    for (int i = 0; i < attributeCount; i++) {
-                        String attrNs = strings.getReference(in.readUint32());
-                        String attrName = strings.getReference(in.readUint32());
-                        String attrRawValue = strings.getReference(in.readUint32());
-
-                        // Read the value-specific fields
-
-                        int valSize = in.readUint16();
-                        short valRes0 = in.readUint8();
-                        Set<ValueType> valDataType = ValueType.getTypes(in.readUint8());
-                        long valData = in.readUint32();
-
-                        // Create the attrValue instance
-
-                        Value attrTypedValue = new Value(valSize, valRes0, valDataType, valData);
-
-                        // Create attribute instance
-
-                        attributes.add(i, new XmlTreeAttribute(attrNs, attrName, attrRawValue, attrTypedValue));
-                    }
-
-                    result = new XmlTreeNode.XmlTreeStartElement(lineNumber, comment, ns, name, attributeStart,
-                            attributeSize, attributeCount, idIndex, classIndex, styleIndex, attributes);
-                    break;
-
-                case XmlEndElement:
-                    ns = strings.getReference(in.readUint32());
-                    name = strings.getReference(in.readUint32());
-
-                    result = new XmlTreeNode.XmlTreeEndElement(lineNumber, comment, ns, name);
-                    break;
-
-                default:
-                    throw new IOException("Unexpected resource type: " + type);
-            }
-        }
-
-        return result;
     }
 }

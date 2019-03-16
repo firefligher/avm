@@ -7,13 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 
 @Data
-abstract class XmlTreeNode {
+public abstract class XmlTreeNode {
     @Getter
-    static class XmlTreeNamespace extends XmlTreeNode {
+    public static class XmlTreeNamespace extends XmlTreeNode {
         private final String prefix;
         private final String uri;
 
-        XmlTreeNamespace(long lineNumber, String comment, String prefix, String uri) {
+        public XmlTreeNamespace(long lineNumber, String comment, String prefix, String uri) {
             super(lineNumber, comment);
 
             this.prefix = prefix;
@@ -28,11 +28,11 @@ abstract class XmlTreeNode {
     }
 
     @Getter
-    static class XmlTreeEndElement extends XmlTreeNode {
+    public static class XmlTreeEndElement extends XmlTreeNode {
         private final String ns;
         private final String name;
 
-        XmlTreeEndElement(long lineNumber, String comment, String ns, String name) {
+        public XmlTreeEndElement(long lineNumber, String comment, String ns, String name) {
             super(lineNumber, comment);
 
             this.ns = ns;
@@ -47,7 +47,7 @@ abstract class XmlTreeNode {
     }
 
     @Getter
-    static class XmlTreeStartElement extends XmlTreeEndElement {
+    public static class XmlTreeStartElement extends XmlTreeEndElement {
         private final int attributeStart;
         private final int attributeSize;
         private final int attributeCount;
@@ -56,7 +56,7 @@ abstract class XmlTreeNode {
         private final int styleIndex;
         private final List<XmlTreeAttribute> attributes;
 
-        XmlTreeStartElement(long lineNumber, String comment, String ns, String name, int attributeStart,
+        public XmlTreeStartElement(long lineNumber, String comment, String ns, String name, int attributeStart,
                             int attributeSize, int attributeCount, int idIndex, int classIndex, int styleIndex,
                             List<XmlTreeAttribute> attributes) {
             super(lineNumber, comment, ns, name);

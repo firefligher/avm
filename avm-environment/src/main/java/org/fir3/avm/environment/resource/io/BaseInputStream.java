@@ -14,4 +14,10 @@ abstract class BaseInputStream<SourceInputStream extends InputStream> extends In
     public int read() throws IOException {
         return this.source.read();
     }
+
+    @Override
+    public void close() throws IOException {
+        this.source.close();
+        super.close();
+    }
 }
