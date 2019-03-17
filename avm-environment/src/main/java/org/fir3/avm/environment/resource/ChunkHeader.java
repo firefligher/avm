@@ -1,13 +1,15 @@
 package org.fir3.avm.environment.resource;
 
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 @Data
-public abstract class ChunkHeader {
+public abstract class ChunkHeader implements ResourceTypeProvider {
     public static class NullHeader extends ChunkHeader {
         public NullHeader(Set<ResourceType> type, int headerSize, long size) {
             super(type, headerSize, size);
@@ -16,7 +18,7 @@ public abstract class ChunkHeader {
         @Override
         public String toString() {
             return String.format("%s(type=%s, headerSize=%d, size=%d)", this.getClass().getSimpleName(),
-                    Arrays.toString(this.getType().toArray()), this.getHeaderSize(), this.getSize());
+                    Arrays.toString(this.getResourceTypes().toArray()), this.getHeaderSize(), this.getSize());
         }
     }
 
@@ -28,7 +30,7 @@ public abstract class ChunkHeader {
         @Override
         public String toString() {
             return String.format("%s(type=%s, headerSize=%d, size=%d)", this.getClass().getSimpleName(),
-                    Arrays.toString(this.getType().toArray()), this.getHeaderSize(), this.getSize());
+                    Arrays.toString(this.getResourceTypes().toArray()), this.getHeaderSize(), this.getSize());
         }
     }
 
@@ -47,8 +49,8 @@ public abstract class ChunkHeader {
         @Override
         public String toString() {
             return String.format("%s(type=%s, headerSize=%d, size=%d, lineNumber=%d, comment=%d)",
-                    this.getClass().getSimpleName(), Arrays.toString(this.getType().toArray()), this.getHeaderSize(),
-                    this.getSize(), this.lineNumber, this.comment);
+                    this.getClass().getSimpleName(), Arrays.toString(this.getResourceTypes().toArray()),
+                    this.getHeaderSize(), this.getSize(), this.lineNumber, this.comment);
         }
     }
 
@@ -75,13 +77,19 @@ public abstract class ChunkHeader {
         public String toString() {
             return String.format("%s(type=%s, headerSize=%d, size=%d, stringCount=%d, styleCount=%d, flags=%d, " +
                             "stringsStart=%d, stylesStart=%d)",
-                    this.getClass().getSimpleName(), Arrays.toString(this.getType().toArray()),
+                    this.getClass().getSimpleName(), Arrays.toString(this.getResourceTypes().toArray()),
                     this.getHeaderSize(), this.getSize(), this.stringCount, this.styleCount, this.flags,
                     this.stringsStart, this.stylesStart);
         }
     }
 
+    @Getter(value = AccessLevel.NONE)
     private final Set<ResourceType> type;
     private final int headerSize;
     private final long size;
+
+    @Override
+    public Set<ResourceType> getResourceTypes() {
+        return Collections.unmodifiableSet(this.type);
+    }
 }

@@ -2,8 +2,11 @@ package org.fir3.avm.environment.resource;
 
 import lombok.Data;
 
+import java.util.Collections;
+import java.util.Set;
+
 @Data
-public class StringPool {
+public class StringPool implements ResourceTypeProvider {
     private static final long NULL_REFERENCE = 0xFFFFFFFFL;
 
     private final String[] pool;
@@ -21,5 +24,10 @@ public class StringPool {
         }
 
         return this.pool[(int) index];
+    }
+
+    @Override
+    public Set<ResourceType> getResourceTypes() {
+        return Collections.singleton(ResourceType.StringPool);
     }
 }

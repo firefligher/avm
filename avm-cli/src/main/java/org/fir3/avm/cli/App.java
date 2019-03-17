@@ -7,6 +7,11 @@ import lombok.extern.java.Log;
 import org.fir3.avm.environment.AppContainer;
 import org.fir3.avm.environment.resource.io.ResourceInputStream;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -57,9 +62,12 @@ public class App {
             container = new AppContainer(optApkFiles.value(options));
 
             try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("AndroidManifest.xml"))) {
-                System.out.println(stream.readChunk().getDocument());
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                DOMSource source = new DOMSource(stream.readChunk().getDocument());
+
+                transformer.transform(source, new StreamResult(System.out));
             }
-        } catch (IOException ex) {
+        } catch (IOException | TransformerException ex) {
             log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
             return;
         }

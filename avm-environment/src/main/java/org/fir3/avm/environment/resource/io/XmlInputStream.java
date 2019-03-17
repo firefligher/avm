@@ -6,7 +6,9 @@ import org.fir3.avm.environment.util.CollectionUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class XmlInputStream extends BaseInputStream<LEInputStream> {
     private final StringPool strings;
@@ -19,7 +21,7 @@ public class XmlInputStream extends BaseInputStream<LEInputStream> {
     public XmlTreeNode readTreeNode(ChunkHeader.XmlTreeNodeHeader header) throws IOException {
         // Get the common information from the header
 
-        ResourceType type = CollectionUtil.getFirst(header.getType());
+        Set<ResourceType> types = header.getResourceTypes();
         long lineNumber = header.getLineNumber();
         String comment = this.strings.getReference(header.getComment());
 
@@ -27,14 +29,14 @@ public class XmlInputStream extends BaseInputStream<LEInputStream> {
 
         String ns, name;
 
-        switch (type) {
+        switch (CollectionUtil.getFirst(types)) {
             case XmlFirstChunk:
             case XmlStartNamespace:
             case XmlEndNamespace:
                 String prefix = this.strings.getReference(this.source.readUint32());
                 String uri = this.strings.getReference(this.source.readUint32());
 
-                return new XmlTreeNode.XmlTreeNamespace(lineNumber, comment, prefix, uri);
+                return new XmlTreeNode.XmlTreeNamespace(types, lineNumber, comment, prefix, uri);
 
             case XmlStartElement:
                 ns = this.strings.getReference(this.source.readUint32());
@@ -54,17 +56,17 @@ public class XmlInputStream extends BaseInputStream<LEInputStream> {
                     attributes.add(i, this.readTreeAttribute());
                 }
 
-                return new XmlTreeNode.XmlTreeStartElement(lineNumber, comment, ns, name, attributeStart, attributeSize,
-                        attributeCount, idIndex, classIndex, styleIndex, attributes);
+                return new XmlTreeNode.XmlTreeStartElement(types, lineNumber, comment, ns, name, attributeStart,
+                        attributeSize, attributeCount, idIndex, classIndex, styleIndex, attributes);
 
             case XmlEndElement:
                 ns = this.strings.getReference(this.source.readUint32());
                 name = this.strings.getReference(this.source.readUint32());
 
-                return new XmlTreeNode.XmlTreeEndElement(lineNumber, comment, ns, name);
+                return new XmlTreeNode.XmlTreeEndElement(types, lineNumber, comment, ns, name);
 
             default:
-                throw new IOException("Unexpected resource type: " + type);
+                throw new IOException("Unexpected resource type(s): " + Arrays.toString(types.toArray()));
         }
     }
 
