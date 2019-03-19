@@ -2,10 +2,7 @@ package org.fir3.avm.environment.resource;
 
 import lombok.Getter;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public enum ResourceType {
+public enum ResourceType implements IdProvider {
     Null(0x0000),
     StringPool(0x0001),
     Table(0x0002),
@@ -29,19 +26,5 @@ public enum ResourceType {
 
     ResourceType(int id) {
         this.id = id;
-    }
-
-    public static Set<ResourceType> getTypes(int id) {
-        Set<ResourceType> result = new HashSet<>(2);
-
-        for (ResourceType type : ResourceType.values()) {
-            if (type.getId() != id) {
-                continue;
-            }
-
-            result.add(type);
-        }
-
-        return result;
     }
 }

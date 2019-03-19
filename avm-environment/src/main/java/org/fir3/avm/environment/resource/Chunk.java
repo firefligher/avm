@@ -12,6 +12,7 @@ import org.w3c.dom.Document;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -91,17 +92,40 @@ public class Chunk {
     public Table getTable() throws IOException {
         this.expectType(ResourceType.Table);
 
+        Set<TablePackage> packages = new HashSet<>();
+
         try (ResourceInputStream in = new ResourceInputStream(new ByteArrayInputStream(this.data))) {
-            while (true) {
-                Chunk c = in.readChunk();
+            ChunkHeader.TableHeader header = (ChunkHeader.TableHeader) this.header;
+            StringPool strings = null;
 
-                System.out.println(c.header);
+            // Reading chunks as long as the package count is larger than the actual number of packages read.
 
-                if (c.header.getResourceTypes().contains(ResourceType.StringPool)) {
-                    System.out.println(c.getStringPool().toString());
+            while (header.getPackageCount() > packages.size()) {
+                Chunk chunk = in.readChunk();
+
+                // Proceeding the chunk
+
+                ResourceType type = CollectionUtil.getFirst(chunk.getHeader().getResourceTypes());
+
+                if (type == ResourceType.StringPool) {
+                    if (strings != null) {
+                        throw new UnsupportedOperationException("No more than one StringPool is supported!");
+                    }
+
+                    strings = chunk.getStringPool();
+                    continue;
                 }
+
+                if (type == ResourceType.TablePackage) {
+                    packages.add(chunk.getTablePackage());
+                    continue;
+                }
+
+                throw new IOException("Unexpected resource type: " + type);
             }
         }
+
+        return new Table(packages);
     }
 
     public StringPool getStringPool() throws IOException {
@@ -118,6 +142,36 @@ public class Chunk {
         try (XmlInputStream in = new XmlInputStream(new ByteArrayInputStream(this.data), strings)) {
             return in.readTreeNode((ChunkHeader.XmlTreeNodeHeader) this.header);
         }
+    }
+
+    public TablePackage getTablePackage() throws IOException {
+        this.expectType(ResourceType.TablePackage);
+
+        // Get the required information for the header
+
+        ChunkHeader.TablePackageHeader header = (ChunkHeader.TablePackageHeader) this.header;
+        long id = header.getId();
+        String name = header.getName();
+
+        // Reading the data pool
+
+        try (ResourceInputStream in = new ResourceInputStream(new ByteArrayInputStream(this.data))) {
+            while (true) {
+                Chunk c = in.readChunk();
+
+                System.out.println(c);
+
+                if (c.getHeader().getResourceTypes().contains(ResourceType.StringPool)) {
+                    System.out.println(c.getStringPool());
+                }
+
+                if (false == true) {
+                    break;
+                }
+            }
+        }
+
+        return new TablePackage(id, name);
     }
 
     private void expectType(ResourceType... types) throws IOException {

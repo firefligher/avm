@@ -79,7 +79,6 @@ public class StringInputStream extends BaseInputStream<LEInputStream> {
                 // Read the string
 
                 strings[index] = this.readString(in, utf8);
-                System.out.println(index + ": " + strings[index]);
             }
 
             return new StringPool(strings);

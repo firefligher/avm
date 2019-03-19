@@ -2,10 +2,7 @@ package org.fir3.avm.environment.resource;
 
 import lombok.Getter;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public enum ValueType {
+public enum ValueType implements IdProvider {
     NULL(0x00),
     REFERENCE(0x01),
     ATTRIBUTE(0x02),
@@ -30,19 +27,5 @@ public enum ValueType {
 
     ValueType(int id) {
         this.id = id;
-    }
-
-    public static Set<ValueType> getTypes(int id) {
-        Set<ValueType> result = new HashSet<>(2);
-
-        for (ValueType type : ValueType.values()) {
-            if (type.getId() != id) {
-                continue;
-            }
-
-            result.add(type);
-        }
-
-        return result;
     }
 }

@@ -1,5 +1,10 @@
 package org.fir3.avm.environment.resource;
 
-public class Table {
+import lombok.Data;
 
+import java.util.Set;
+
+@Data
+public class Table {
+    private final Set<TablePackage> packages;
 }
