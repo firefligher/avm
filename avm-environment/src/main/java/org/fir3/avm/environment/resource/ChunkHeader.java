@@ -56,6 +56,9 @@ public abstract class ChunkHeader implements ResourceTypeProvider {
 
     @Getter
     public static class StringPoolHeader extends ChunkHeader {
+        public static final long FLAG_SORTED    = 0b00000000_00000000_00000000_00000001;
+        public static final long FLAG_UTF8      = 0b00000000_00000000_00000001_00000000;
+
         private final long stringCount;
         private final long styleCount;
         private final long flags;
@@ -80,6 +83,23 @@ public abstract class ChunkHeader implements ResourceTypeProvider {
                     this.getClass().getSimpleName(), Arrays.toString(this.getResourceTypes().toArray()),
                     this.getHeaderSize(), this.getSize(), this.stringCount, this.styleCount, this.flags,
                     this.stringsStart, this.stylesStart);
+        }
+    }
+
+    @Getter
+    public static class TableHeader extends ChunkHeader {
+        private final long packageCount;
+
+        public TableHeader(Set<ResourceType> type, int headerSize, long size, long packageCount) {
+            super(type, headerSize, size);
+            this.packageCount = packageCount;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s(type=%s, headerSize=%d, size=%d, packageCount=%d)",
+                    this.getClass().getSimpleName(), Arrays.toString(this.getResourceTypes().toArray()),
+                    this.getHeaderSize(), this.getSize(), this.packageCount);
         }
     }
 

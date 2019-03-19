@@ -1,6 +1,7 @@
 package org.fir3.avm.environment.resource.io;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -17,7 +18,15 @@ public class LEInputStream extends BaseInputStream<DataInputStream> {
     }
 
     public short readUint8() throws IOException {
-        return (short) this.read();
+        int val = this.read();
+
+        // Check, if the end of the stream has been reached
+
+        if (val == -1) {
+            throw new EOFException();
+        }
+
+        return (short) val;
     }
 
     public int readUint16() throws IOException {

@@ -77,7 +77,7 @@ public class Chunk {
                 }
 
                 if (Arrays.binarySearch(Chunk.NODE_TYPES, type) >= 0) {
-                    docGen.proceed(chunk.getXmlTreeNode(strings));
+                    docGen.proceed(chunk.getXmlTreeNode(strings), strings);
                     continue;
                 }
 
@@ -86,6 +86,22 @@ public class Chunk {
         }
 
         return docGen.getDocument();
+    }
+
+    public Table getTable() throws IOException {
+        this.expectType(ResourceType.Table);
+
+        try (ResourceInputStream in = new ResourceInputStream(new ByteArrayInputStream(this.data))) {
+            while (true) {
+                Chunk c = in.readChunk();
+
+                System.out.println(c.header);
+
+                if (c.header.getResourceTypes().contains(ResourceType.StringPool)) {
+                    System.out.println(c.getStringPool().toString());
+                }
+            }
+        }
     }
 
     public StringPool getStringPool() throws IOException {

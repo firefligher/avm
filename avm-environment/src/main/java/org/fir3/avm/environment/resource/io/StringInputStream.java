@@ -6,6 +6,7 @@ import org.fir3.avm.environment.util.StreamUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +61,10 @@ public class StringInputStream extends BaseInputStream<LEInputStream> {
             }
         });
 
+        // Find out if the strings are encoded in UTF-8 or in UTF-16 (little endian)
+
+        boolean utf8 = (header.getFlags() & ChunkHeader.StringPoolHeader.FLAG_UTF8) != 0;
+
         // Read the strings in the right order
 
         try (CounterInputStream countedIn = new CounterInputStream(this.source);
@@ -71,33 +76,94 @@ public class StringInputStream extends BaseInputStream<LEInputStream> {
 
                 StreamUtil.skipFully(this.source, indices[index] - countedIn.getCount());
 
-                // Determine the length of the final string
+                // Read the string
 
-                int length = in.readUint16();
-
-                if ((length & 0x8000) == 0x8000) {
-                    length &= 0x7FFF;
-                    length <<= 16;
-                    length |= in.readUint16();
-                }
-
-                // Read the string's bytes from the stream (UTF-16 encoded)
-
-                byte[] data = new byte[length * 2];
-                StreamUtil.readFully(in, data);
-
-                // Expecting two zero bytes
-
-                if (in.readUint16() != 0x0000) {
-                    throw new IOException("Expected string terminator!");
-                }
-
-                // Decode the string data
-
-                strings[index] = new String(data, StandardCharsets.UTF_16LE);
+                strings[index] = this.readString(in, utf8);
+                System.out.println(index + ": " + strings[index]);
             }
 
             return new StringPool(strings);
         }
+    }
+
+    private String readString(LEInputStream src, boolean utf8) throws IOException {
+        // Determine the length of the final string. For some reason, the format differs in encoding the length for
+        // UTF-8/UTF-16 strings:
+        //
+        // - UTF-16:    The length is encoded in two or four bytes.
+        // - UTF-8:     The length of the string as UTF-16 string is encoded in one to two bytes and after this the
+        //              length of the actual UTF-8 string is also encoded in one to two bytes.
+
+        int length;
+
+        if (utf8) {
+            // Discarding the UTF-16 length, because we do not need it in our decoding process.
+
+            this.readUtf8Length(src);
+            length = this.readUtf8Length(src);
+        } else {
+            length = this.readUtf16Length(src);
+        }
+
+
+        // Read the string's bytes from the stream
+
+        byte[] data;
+
+        if (utf8) {
+            data = new byte[length];
+        } else {
+            data = new byte[length * 2];
+        }
+
+        StreamUtil.readFully(src, data);
+
+        // Expecting one '\u0000' character
+
+        long nullCharacter;
+
+        if (utf8) {
+            nullCharacter = src.readUint8();
+        } else {
+            nullCharacter = src.readUint16();
+        }
+
+        if (nullCharacter != 0x0000) {
+            throw new IOException("Expected string terminator!");
+        }
+
+        // Decode the string data
+
+        Charset charset = StandardCharsets.UTF_16LE;
+
+        if (utf8) {
+            charset = StandardCharsets.UTF_8;
+        }
+
+        return new String(data, charset);
+    }
+
+    private int readUtf8Length(LEInputStream src) throws IOException {
+        int length = src.readUint8();
+
+        if ((length & 0x80) == 0x80) {
+            // MSB set, using two bytes for length
+
+            length = (length & 0x7F) << 8 | src.readUint8();
+        }
+
+        return length;
+    }
+
+    private int readUtf16Length(LEInputStream src) throws IOException {
+        int length = src.readUint16();
+
+        if ((length & 0x8000) == 0x8000) {
+            // MSB set, using four bytes for length
+
+            length = (length & 0x7FFF) << 16 | src.readUint16();
+        }
+
+        return length;
     }
 }

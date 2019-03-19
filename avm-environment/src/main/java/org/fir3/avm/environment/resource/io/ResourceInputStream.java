@@ -29,12 +29,10 @@ public class ResourceInputStream extends BaseInputStream<LEInputStream> {
         // Read the type-specific header fields
 
         ResourceType type = CollectionUtil.getFirst(types);
-        ChunkHeader result;
 
         switch (type) {
             case Null:
-                result = new ChunkHeader.NullHeader(types, headerSize, size);
-                break;
+                return new ChunkHeader.NullHeader(types, headerSize, size);
 
             case StringPool:
                 long stringCount = this.source.readUint32();
@@ -43,14 +41,12 @@ public class ResourceInputStream extends BaseInputStream<LEInputStream> {
                 long stringsStart = this.source.readUint32();
                 long stylesStart = this.source.readUint32();
 
-                result = new ChunkHeader.StringPoolHeader(types, headerSize, size, stringCount, styleCount, flags,
+                return new ChunkHeader.StringPoolHeader(types, headerSize, size, stringCount, styleCount, flags,
                         stringsStart, stylesStart);
-                break;
 
             case Xml:
             case XmlResourceMap:
-                result = new ChunkHeader.XmlTreeHeader(types, headerSize, size);
-                break;
+                return new ChunkHeader.XmlTreeHeader(types, headerSize, size);
 
             case XmlCdata:
             case XmlFirstChunk:
@@ -61,14 +57,16 @@ public class ResourceInputStream extends BaseInputStream<LEInputStream> {
                 long lineNumber = this.source.readUint32();
                 long comment = this.source.readUint32();
 
-                result = new ChunkHeader.XmlTreeNodeHeader(types, headerSize, size, lineNumber, comment);
-                break;
+                return new ChunkHeader.XmlTreeNodeHeader(types, headerSize, size, lineNumber, comment);
+
+            case Table:
+                long packageCount = this.source.readUint32();
+
+                return new ChunkHeader.TableHeader(types, headerSize, size, packageCount);
 
             default:
                 throw new UnsupportedOperationException("Unsupported type: " + type);
         }
-
-        return result;
     }
 
     public Chunk readChunk() throws IOException {

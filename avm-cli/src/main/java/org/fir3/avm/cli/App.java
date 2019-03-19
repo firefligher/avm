@@ -7,11 +7,6 @@ import lombok.extern.java.Log;
 import org.fir3.avm.environment.AppContainer;
 import org.fir3.avm.environment.resource.io.ResourceInputStream;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,15 +56,28 @@ public class App {
         try {
             container = new AppContainer(optApkFiles.value(options));
 
+            try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("resources.arsc"))) {
+                System.out.println(stream.readChunk().getTable());
+            }
+
+            /*
             try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("AndroidManifest.xml"))) {
-                Transformer transformer = TransformerFactory.newInstance().newTransformer();
                 DOMSource source = new DOMSource(stream.readChunk().getDocument());
 
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
                 transformer.transform(source, new StreamResult(System.out));
+
+                //System.out.println(AndroidManifest.deserialize(stream.readChunk().getDocument()));
             }
-        } catch (IOException | TransformerException ex) {
+            */
+        } catch (IOException ex) {
             log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
             return;
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

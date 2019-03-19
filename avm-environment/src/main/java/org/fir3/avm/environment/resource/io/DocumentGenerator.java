@@ -2,6 +2,7 @@ package org.fir3.avm.environment.resource.io;
 
 import lombok.Getter;
 import org.fir3.avm.environment.resource.ResourceType;
+import org.fir3.avm.environment.resource.StringPool;
 import org.fir3.avm.environment.resource.XmlTreeAttribute;
 import org.fir3.avm.environment.resource.XmlTreeNode;
 import org.fir3.avm.environment.util.CollectionUtil;
@@ -40,7 +41,7 @@ public class DocumentGenerator {
         this.nodePtr = this.document;
     }
 
-    public void proceed(XmlTreeNode node) {
+    public void proceed(XmlTreeNode node, StringPool strings) {
         ResourceType type = CollectionUtil.getFirst(node.getResourceTypes());
 
         switch (type) {
@@ -79,7 +80,7 @@ public class DocumentGenerator {
                         newAttr = this.document.createAttribute(xmlAttr.getName());
                     }
 
-                    newAttr.setValue(xmlAttr.getRawValue());
+                    newAttr.setValue(xmlAttr.getTypedValue().toString(strings));
 
                     // Add the attribute to the element
 
