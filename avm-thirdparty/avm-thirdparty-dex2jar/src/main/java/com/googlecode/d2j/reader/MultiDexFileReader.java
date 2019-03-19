@@ -1,61 +1,29 @@
 package com.googlecode.d2j.reader;
 
 import com.googlecode.d2j.DexConstants;
-import com.googlecode.d2j.util.zip.AccessBufByteArrayOutputStream;
-import com.googlecode.d2j.util.zip.ZipEntry;
-import com.googlecode.d2j.util.zip.ZipFile;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class MultiDexFileReader implements BaseDexFileReader {
+    public static MultiDexFileReader from(InputStream... streams) throws IOException {
+        DexFileReader[] readers = new DexFileReader[streams.length];
+
+        for (int i = 0; i < readers.length; i++) {
+            readers[i] = new DexFileReader(streams[i]);
+        }
+
+        return new MultiDexFileReader(Arrays.asList(readers));
+    }
+
     final private List<DexFileReader> readers = new ArrayList<>();
     final private List<Item> items = new ArrayList<>();
 
     public MultiDexFileReader(Collection<DexFileReader> readers) {
         this.readers.addAll(readers);
         init();
-    }
-
-    private static byte[] toByteArray(InputStream is) throws IOException {
-        AccessBufByteArrayOutputStream out = new AccessBufByteArrayOutputStream();
-        byte[] buff = new byte[1024];
-        for (int c = is.read(buff); c > 0; c = is.read(buff)) {
-            out.write(buff, 0, c);
-        }
-        return out.getBuf();
-    }
-
-    public static BaseDexFileReader open(byte[] data) throws IOException {
-        if (data.length < 3) {
-            throw new IOException("File too small to be a dex/zip");
-        }
-        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) {// dex
-            return new DexFileReader(data);
-        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) {// ZIP
-            TreeMap<String, DexFileReader> dexFileReaders = new TreeMap<>();
-            try (ZipFile zipFile = new ZipFile(data)) {
-                for (ZipEntry e : zipFile.entries()) {
-                    String entryName = e.getName();
-                    if (entryName.startsWith("classes") && entryName.endsWith(".dex")) {
-                        if (!dexFileReaders.containsKey(entryName)) { // only the first one
-                            dexFileReaders.put(entryName, new DexFileReader(toByteArray(zipFile.getInputStream(e))));
-                        }
-                    }
-                }
-            }
-            if (dexFileReaders.size() == 0) {
-                throw new IOException("Can not find classes.dex in zip file");
-            } else if (dexFileReaders.size() == 1) {
-                return dexFileReaders.firstEntry().getValue();
-            } else {
-                return new MultiDexFileReader(dexFileReaders.values());
-            }
-        }
-        throw new IOException("the src file not a .dex or zip file");
     }
 
     void init() {

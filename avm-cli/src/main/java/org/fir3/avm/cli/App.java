@@ -5,12 +5,11 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import lombok.extern.java.Log;
 import org.fir3.avm.environment.AppContainer;
-import org.fir3.avm.environment.resource.io.ResourceInputStream;
-import org.fir3.avm.environment.resource.manifest.AndroidManifest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
@@ -27,6 +26,9 @@ public class App {
 
         OptionSpec<Void> optHelp = parser.acceptsAll(Arrays.asList("help", "h"),
                 i18n.getString("args.option.help")).forHelp();
+
+        OptionSpec<String> optActivity = parser.acceptsAll(Collections.singletonList("activity"),
+                i18n.getString("args.option.activity")).withRequiredArg();
 
         OptionSpec<File> optApkFiles = parser.nonOptions(i18n.getString("args.option.nonOptions"))
                 .ofType(File.class);
@@ -50,6 +52,14 @@ public class App {
             return;
         }
 
+        String launcherActivity = null;
+
+        // TODO: Get the launcher activity from the AndroidManifest.xml
+
+        if (options.has(optActivity)) {
+            launcherActivity = optActivity.value(options);
+        }
+
         // Setup of the AppContainer
 
         AppContainer container;
@@ -57,23 +67,7 @@ public class App {
         try {
             container = new AppContainer(optApkFiles.value(options));
 
-            /*
-            try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("resources.arsc"))) {
-                System.out.println(stream.readChunk().getTable());
-            }
-            */
-
-            try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("AndroidManifest.xml"))) {
-                /*DOMSource source = new DOMSource(stream.readChunk().getDocument());
-
-                Transformer transformer = TransformerFactory.newInstance().newTransformer();
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-                transformer.transform(source, new StreamResult(System.out));*/
-
-                System.out.println(AndroidManifest.deserialize(stream.readChunk().getDocument()));
-            }
+            container.getApkAccess().getClassLoader().loadClass(launcherActivity);
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
             return;
