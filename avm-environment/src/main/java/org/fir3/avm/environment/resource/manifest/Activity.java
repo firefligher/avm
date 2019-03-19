@@ -11,25 +11,30 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Application {
+public class Activity {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private boolean allowTaskReparenting;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String backupAgent;
+    private boolean alwaysRetainTaskState;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean debuggable;
+    private boolean clearTaskOnLaunch;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long description;
+    private String configChanges;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private boolean enabled;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean hasCode;
+    private boolean excludeFromRecents;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private boolean exported;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private boolean finishOnTaskLaunch;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private boolean hardwareAccelerated;
@@ -39,39 +44,35 @@ public class Application {
     private Long icon;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean killAfterRestore;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean largeHeap;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     @XmlJavaTypeAdapter(HexLongAdapter.class)
     private Long label;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long logo;
+    private LaunchMode launchMode;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String manageSpaceActivity;
+    private boolean multiprocess;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private String name;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String permission;
+    private boolean noHistory;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean persistent;
+    private String parentActivityName;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private String permission;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private String process;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean restoreAnyVersion;
+    private ScreenOrientation screenOrientation;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean supportsRtl;
+    private boolean stateNotNeeded;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private String taskAffinity;
@@ -83,21 +84,12 @@ public class Application {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private UiOptions uiOptions;
 
-    @XmlElement(name = "activity")
-    private Activity[] activities;
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private String windowSoftInputMode;
 
-    @XmlElement(name = "activity-atlas")
-    private ActivityAtlas[] activityAtlases;
+    @XmlElement(name = "intent-filter")
+    private IntentFilter[] intentFilters;
 
-    @XmlElement(name = "service")
-    private Service[] services;
-
-    @XmlElement(name = "receiver")
-    private Receiver[] receivers;
-
-    @XmlElement(name = "provider")
-    private Provider[] providers;
-
-    @XmlElement(name = "uses-library")
-    private UsesLibrary[] usesLibraries;
+    @XmlElement(name = "meta-data")
+    private MetaData[] metaData;
 }

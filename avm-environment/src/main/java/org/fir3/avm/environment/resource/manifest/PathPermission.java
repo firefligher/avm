@@ -1,33 +1,29 @@
 package org.fir3.avm.environment.resource.manifest;
 
 import lombok.Data;
-import org.fir3.avm.environment.resource.adapter.HexLongAdapter;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
+public class PathPermission {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
+    private String path;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
+    private String pathPrefix;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long icon;
+    private String pathPattern;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long label;
+    private String permission;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String name;
+    private String readPermission;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
+    private String writePermission;
 }

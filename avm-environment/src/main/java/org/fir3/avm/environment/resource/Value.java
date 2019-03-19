@@ -19,8 +19,8 @@ public class Value {
             case NULL:
                 return "";
 
-            case REFERENCE: // TODO: Fix this
-                return this.toString();
+            case REFERENCE:
+                return String.format("0x%h", Long.toHexString(this.data));
 
             case STRING:
                 return strings.getReference(this.data);

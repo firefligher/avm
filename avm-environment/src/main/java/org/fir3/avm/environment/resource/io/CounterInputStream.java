@@ -5,11 +5,11 @@ import lombok.Getter;
 import java.io.IOException;
 import java.io.InputStream;
 
-class CounterInputStream extends BaseInputStream<InputStream> {
+public class CounterInputStream extends BaseInputStream<InputStream> {
     @Getter
     private long count;
 
-    CounterInputStream(InputStream source) {
+    public CounterInputStream(InputStream source) {
         super(source);
     }
 

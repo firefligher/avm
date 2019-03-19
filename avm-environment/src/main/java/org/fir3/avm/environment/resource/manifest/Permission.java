@@ -10,12 +10,10 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
+public class Permission {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
+    @XmlJavaTypeAdapter(HexLongAdapter.class)
+    private Long description;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     @XmlJavaTypeAdapter(HexLongAdapter.class)
@@ -29,5 +27,8 @@ public class Instrumentation {
     private String name;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
+    private String permissionGroup;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private ProtectionLevel protectionLevel;
 }

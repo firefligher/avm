@@ -6,6 +6,7 @@ import joptsimple.OptionSpec;
 import lombok.extern.java.Log;
 import org.fir3.avm.environment.AppContainer;
 import org.fir3.avm.environment.resource.io.ResourceInputStream;
+import org.fir3.avm.environment.resource.manifest.AndroidManifest;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,23 +57,23 @@ public class App {
         try {
             container = new AppContainer(optApkFiles.value(options));
 
+            /*
             try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("resources.arsc"))) {
                 System.out.println(stream.readChunk().getTable());
             }
+            */
 
-            /*
             try (ResourceInputStream stream = new ResourceInputStream(container.getApkAccess().getInputStream("AndroidManifest.xml"))) {
-                DOMSource source = new DOMSource(stream.readChunk().getDocument());
+                /*DOMSource source = new DOMSource(stream.readChunk().getDocument());
 
                 Transformer transformer = TransformerFactory.newInstance().newTransformer();
                 transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
-                transformer.transform(source, new StreamResult(System.out));
+                transformer.transform(source, new StreamResult(System.out));*/
 
-                //System.out.println(AndroidManifest.deserialize(stream.readChunk().getDocument()));
+                System.out.println(AndroidManifest.deserialize(stream.readChunk().getDocument()));
             }
-            */
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
             return;

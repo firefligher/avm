@@ -10,13 +10,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
-
+public class PermissionTree {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     @XmlJavaTypeAdapter(HexLongAdapter.class)
     private Long icon;
@@ -27,7 +21,4 @@ public class Instrumentation {
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private String name;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
 }

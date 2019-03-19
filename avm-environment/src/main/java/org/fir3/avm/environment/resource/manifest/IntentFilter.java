@@ -6,17 +6,12 @@ import org.fir3.avm.environment.resource.adapter.HexLongAdapter;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
-
+public class IntentFilter {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     @XmlJavaTypeAdapter(HexLongAdapter.class)
     private Long icon;
@@ -26,8 +21,14 @@ public class Instrumentation {
     private Long label;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String name;
+    private int priority;
 
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
+    @XmlElement(name = "action")
+    private Action[] actions;
+
+    @XmlElement(name = "category")
+    private Category[] categories;
+
+    @XmlElement(name = "data")
+    private org.fir3.avm.environment.resource.manifest.Data[] data;
 }

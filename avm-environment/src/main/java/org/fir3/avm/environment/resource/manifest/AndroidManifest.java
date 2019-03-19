@@ -37,9 +37,27 @@ public class AndroidManifest {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private InstallLocation location;
 
-    @XmlElement
+    @XmlElement(required = true)
     private Application application;
 
     @XmlElement(name = "instrumentation")
     private Instrumentation[] instrumentations;
+
+    @XmlElement(name = "permission")
+    private Permission[] permissions;
+
+    @XmlElement(name = "permission-group")
+    private PermissionGroup[] permissionGroups;
+
+    @XmlElement(name = "permission-tree")
+    private PermissionTree[] permissionTrees;
+
+    @XmlElement(name = "uses-configuration")
+    private UsesConfiguration[] usesConfigurations;
+
+    @XmlElement(name = "uses-permission")
+    private UsesPermission[] usesPermissions;
+
+    @XmlElement(name = "uses-sdk")
+    private UsesSdk[] usesSdks;
 }

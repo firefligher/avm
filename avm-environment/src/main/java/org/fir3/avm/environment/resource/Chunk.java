@@ -2,10 +2,7 @@ package org.fir3.avm.environment.resource;
 
 import lombok.Data;
 import lombok.extern.java.Log;
-import org.fir3.avm.environment.resource.io.DocumentGenerator;
-import org.fir3.avm.environment.resource.io.ResourceInputStream;
-import org.fir3.avm.environment.resource.io.StringInputStream;
-import org.fir3.avm.environment.resource.io.XmlInputStream;
+import org.fir3.avm.environment.resource.io.*;
 import org.fir3.avm.environment.util.CollectionUtil;
 import org.w3c.dom.Document;
 
@@ -155,19 +152,18 @@ public class Chunk {
 
         // Reading the data pool
 
-        try (ResourceInputStream in = new ResourceInputStream(new ByteArrayInputStream(this.data))) {
-            while (true) {
-                Chunk c = in.readChunk();
+        try (CounterInputStream cIn = new CounterInputStream(new ByteArrayInputStream(this.data));
+             ResourceInputStream in = new ResourceInputStream(cIn)) {
+            // Read all chunks until we reached the end of the data array
 
-                System.out.println(c);
+            while (cIn.getCount() < this.data.length) {
+                Chunk c = in.readChunk();
 
                 if (c.getHeader().getResourceTypes().contains(ResourceType.StringPool)) {
                     System.out.println(c.getStringPool());
                 }
 
-                if (false == true) {
-                    break;
-                }
+                // TODO: Handle the chunks
             }
         }
 

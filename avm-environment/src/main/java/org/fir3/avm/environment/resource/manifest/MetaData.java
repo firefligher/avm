@@ -10,24 +10,14 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long icon;
-
-    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    @XmlJavaTypeAdapter(HexLongAdapter.class)
-    private Long label;
-
+public class MetaData {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     private String name;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
+    @XmlJavaTypeAdapter(HexLongAdapter.class)
+    private Long resource;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private String value;
 }

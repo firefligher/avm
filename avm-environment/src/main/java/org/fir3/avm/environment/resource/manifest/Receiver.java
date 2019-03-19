@@ -6,16 +6,17 @@ import org.fir3.avm.environment.resource.adapter.HexLongAdapter;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Instrumentation {
+public class Receiver {
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean functionalTest;
+    private boolean enabled;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private boolean handleProfiling;
+    private boolean exported;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
     @XmlJavaTypeAdapter(HexLongAdapter.class)
@@ -29,5 +30,14 @@ public class Instrumentation {
     private String name;
 
     @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
-    private String targetPackage;
+    private String permission;
+
+    @XmlAttribute(namespace = "http://schemas.android.com/apk/res/android")
+    private String process;
+
+    @XmlElement(name = "intent-filter")
+    private IntentFilter[] intentFilters;
+
+    @XmlElement(name = "meta-data")
+    private MetaData[] metaData;
 }
