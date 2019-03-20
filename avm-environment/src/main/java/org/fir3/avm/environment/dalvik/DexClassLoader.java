@@ -2,13 +2,17 @@ package org.fir3.avm.environment.dalvik;
 
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.converter.IR2JConverter;
-import com.googlecode.d2j.dex.*;
+import com.googlecode.d2j.dex.ClassVisitorFactory;
+import com.googlecode.d2j.dex.DexExceptionHandler;
+import com.googlecode.d2j.dex.ExDex2Asm;
+import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
 import com.googlecode.d2j.reader.MultiDexFileReader;
 import com.googlecode.dex2jar.ir.IrMethod;
+import lombok.extern.java.Log;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -16,9 +20,12 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
 
+@Log
 public class DexClassLoader extends ClassLoader {
     private final BaseDexFileReader dexReader;
+    private boolean executed;
 
     public DexClassLoader(InputStream... sources) throws IOException {
         this.dexReader = MultiDexFileReader.from(sources);
@@ -26,6 +33,12 @@ public class DexClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        if (this.executed) {
+            return super.findClass(name);
+        }
+
+        this.executed = true;
+
         // TODO: Make this method more lightweight
 
         DexFileNode fileNode = new DexFileNode();
@@ -49,14 +62,8 @@ public class DexClassLoader extends ClassLoader {
                     public void visitEnd() {
                         super.visitEnd();
 
-                        String className = adapter.getClassName();
+                        String className = adapter.getClassName().replace('/', '.');
                         byte[] data;
-
-                        // Ignore this class, if it is not the requested one
-
-                        if (!name.equals(className.replace('/', '.'))) {
-                            return;
-                        }
 
                         try {
                             data = writer.toByteArray();
@@ -66,7 +73,12 @@ public class DexClassLoader extends ClassLoader {
 
                         // TODO: Maybe use a ProtectionDomain? (Missing security concept...)
 
-                        result[0] = DexClassLoader.super.defineClass(name, data, 0, data.length);
+                        Class<?> definedClass = DexClassLoader.super.defineClass(className, data, 0, data.length);
+                        log.log(Level.INFO, "Defined class: {0}", className);
+
+                        if (name.equals(className)) {
+                            result[0] = definedClass;
+                        }
                     }
                 };
             }
