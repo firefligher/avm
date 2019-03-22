@@ -10,7 +10,6 @@ import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.d2j.reader.MultiDexFileReader;
 import com.googlecode.dex2jar.ir.IrMethod;
 import lombok.extern.java.Log;
 import org.objectweb.asm.ClassVisitor;
@@ -30,8 +29,8 @@ public class DexClassLoader extends ClassLoader {
     private final Map<String, Class<?>> definedClasses;
     private boolean initialized;
 
-    public DexClassLoader(InputStream... sources) throws IOException {
-        this.dexReader = MultiDexFileReader.from(sources);
+    public DexClassLoader(InputStream source) throws IOException {
+        this.dexReader = new DexFileReader(source);
         this.definedClasses = new HashMap<>();
     }
 

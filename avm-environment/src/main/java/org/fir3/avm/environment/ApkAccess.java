@@ -2,13 +2,12 @@ package org.fir3.avm.environment;
 
 import lombok.Getter;
 import org.fir3.avm.environment.dalvik.DexClassLoader;
+import org.fir3.avm.environment.util.MultiClassLoader;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -49,7 +48,7 @@ public class ApkAccess {
         // Otherwise setup a new ClassLoader that includes all classes*.dex files of the APK-file
 
         Enumeration<? extends ZipEntry> entries = this.zipFile.entries();
-        Set<InputStream> sources = new HashSet<>();
+        MultiClassLoader parent = new MultiClassLoader();
 
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
@@ -74,15 +73,11 @@ public class ApkAccess {
                 continue;
             }
 
-            // Get the input stream for the entry
+            // Create the class loader for the entry
 
-            sources.add(this.zipFile.getInputStream(entry));
+            parent.addChild(new DexClassLoader(this.zipFile.getInputStream(entry)));
         }
 
-        if (sources.isEmpty()) {
-            throw new IOException("No classes*.dex file found in APK!");
-        }
-
-        return new DexClassLoader(sources.toArray(new InputStream[0]));
+        return (this.classLoader = parent);
     }
 }
