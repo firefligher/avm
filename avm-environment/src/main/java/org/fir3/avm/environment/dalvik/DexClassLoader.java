@@ -20,24 +20,27 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 @Log
 public class DexClassLoader extends ClassLoader {
     private final BaseDexFileReader dexReader;
-    private boolean executed;
+    private final Map<String, Class<?>> definedClasses;
+    private boolean initialized;
 
     public DexClassLoader(InputStream... sources) throws IOException {
         this.dexReader = MultiDexFileReader.from(sources);
+        this.definedClasses = new HashMap<>();
     }
 
-    @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        if (this.executed) {
-            return super.findClass(name);
+    private void initialize() {
+        if (this.initialized) {
+            return;
         }
 
-        this.executed = true;
+        this.initialized = true;
 
         // TODO: Make this method more lightweight
 
@@ -48,8 +51,6 @@ public class DexClassLoader extends ClassLoader {
         } catch (Exception ex) {
             throw new IllegalStateException("Failed reading dex", ex);
         }
-
-        final Class[] result = new Class[1];
 
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
@@ -73,12 +74,10 @@ public class DexClassLoader extends ClassLoader {
 
                         // TODO: Maybe use a ProtectionDomain? (Missing security concept...)
 
-                        Class<?> definedClass = DexClassLoader.super.defineClass(className, data, 0, data.length);
-                        log.log(Level.INFO, "Defined class: {0}", className);
+                        DexClassLoader.this.definedClasses.put(className, DexClassLoader.super.defineClass(
+                                className, data, 0, data.length));
 
-                        if (name.equals(className)) {
-                            result[0] = definedClass;
-                        }
+                        log.log(Level.INFO, "Defined class: {0}", className);
                     }
                 };
             }
@@ -127,9 +126,14 @@ public class DexClassLoader extends ClassLoader {
                 new IR2JConverter(true).convert(irMethod, mv);
             }
         }.convertDex(fileNode, cvf);
+    }
 
-        if (result[0] != null) {
-            return result[0];
+    @Override
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        this.initialize();
+
+        if (this.definedClasses.containsKey(name)) {
+            return this.definedClasses.get(name);
         }
 
         return super.findClass(name);
