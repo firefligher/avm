@@ -4,14 +4,14 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import lombok.extern.java.Log;
-import org.fir3.avm.environment.AppContainer;
+import org.fir3.avm.cli.launcher.Launcher;
+import org.fir3.avm.cli.launcher.Settings;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 
 @Log
 public class App {
@@ -29,6 +29,9 @@ public class App {
 
         OptionSpec<String> optActivity = parser.acceptsAll(Collections.singletonList("activity"),
                 i18n.getString("args.option.activity")).withRequiredArg();
+
+        OptionSpec<String> optApplication = parser.acceptsAll(Collections.singletonList("application"),
+                i18n.getString("args.option.application")).withRequiredArg();
 
         OptionSpec<File> optApkFiles = parser.nonOptions(i18n.getString("args.option.nonOptions"))
                 .ofType(File.class);
@@ -49,30 +52,31 @@ public class App {
 
         if (!options.hasArgument(optApkFiles)) {
             log.severe("No APK specified, aborting.");
+            System.exit(1);
             return;
         }
 
         String launcherActivity = null;
 
-        // TODO: Get the launcher activity from the AndroidManifest.xml
-
         if (options.has(optActivity)) {
             launcherActivity = optActivity.value(options);
         }
 
-        // Setup of the AppContainer
+        String application = null;
 
-        AppContainer container;
+        if (options.has(optApplication)) {
+            application = optApplication.value(options);
+        }
 
-        try {
-            container = new AppContainer(optApkFiles.value(options));
+        // Launch the application with the specified settings
 
-            container.getApkAccess().getClassLoader().loadClass(launcherActivity);
-        } catch (IOException ex) {
-            log.log(Level.SEVERE, "Cannot create AppContainer!", ex);
-            return;
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        Settings settings = new Settings();
+        settings.setApkFile(optApkFiles.value(options));
+        settings.setApplicationClassName(application);
+        settings.setActivityClassName(launcherActivity);
+
+        if (!Launcher.launch(settings)) {
+            System.exit(1);
         }
     }
 }

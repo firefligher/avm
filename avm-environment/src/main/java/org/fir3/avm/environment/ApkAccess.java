@@ -13,6 +13,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ApkAccess {
+    public static final String PATH_ANDROID_MANIFEST = "AndroidManifest.xml";
+
     @Getter
     private final File physicalFile;
     private final ZipFile zipFile;
