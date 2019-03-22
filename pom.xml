@@ -13,6 +13,7 @@
         <module>avm-cli</module>
         <module>avm-environment</module>
         <module>avm-thirdparty</module>
+        <module>avm-sdk</module>
     </modules>
 
     <properties>
