@@ -1,14 +1,18 @@
 package org.fir3.avm.environment;
 
 import lombok.Getter;
-import org.fir3.avm.environment.dalvik.DexClassLoader;
+import org.fir3.avm.environment.classloader.CachedClassLoader;
+import org.fir3.avm.environment.classloader.DexClassPool;
+import org.fir3.avm.environment.classloader.cache.Cache;
+import org.fir3.avm.environment.classloader.cache.CacheProvider;
+import org.fir3.avm.environment.classloader.cache.EmptyCacheProvider;
+import org.fir3.avm.environment.util.MultiClassLoader;
+import org.fir3.avm.environment.util.StreamUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -42,6 +46,10 @@ public class ApkAccess {
     }
 
     public ClassLoader getClassLoader() throws IOException {
+        return this.getClassLoader(EmptyCacheProvider.INSTANCE);
+    }
+
+    public ClassLoader getClassLoader(CacheProvider cacheProvider) throws IOException {
         // If the classLoader has been created already, use that instance.
 
         if (this.classLoader != null) {
@@ -51,7 +59,7 @@ public class ApkAccess {
         // Otherwise setup a new ClassLoader that includes all classes*.dex files of the APK-file
 
         Enumeration<? extends ZipEntry> entries = this.zipFile.entries();
-        Set<InputStream> sources = new HashSet<>();
+        MultiClassLoader parent = new MultiClassLoader();
 
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
@@ -76,15 +84,15 @@ public class ApkAccess {
                 continue;
             }
 
-            // Get the input stream for the entry
+            // Create the class loader for the entry
 
-            sources.add(this.zipFile.getInputStream(entry));
+            byte[] dexData = StreamUtil.readFully(this.zipFile.getInputStream(entry));
+            DexClassPool classPool = new DexClassPool(dexData);
+            Cache cache = cacheProvider.getCache(dexData);
+
+            parent.addChild(new CachedClassLoader(classPool, cache));
         }
 
-        if (sources.isEmpty()) {
-            throw new IOException("No classes*.dex file found in APK!");
-        }
-
-        return new DexClassLoader(sources.toArray(new InputStream[0]));
+        return (this.classLoader = parent);
     }
 }

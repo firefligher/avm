@@ -1,4 +1,4 @@
-package org.fir3.avm.environment.dalvik;
+package org.fir3.avm.environment.classloader;
 
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.converter.IR2JConverter;
@@ -10,34 +10,37 @@ import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.d2j.reader.MultiDexFileReader;
 import com.googlecode.dex2jar.ir.IrMethod;
-import lombok.extern.java.Log;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.logging.Level;
+import java.util.HashMap;
+import java.util.Map;
 
-@Log
-public class DexClassLoader extends ClassLoader {
+public class DexClassPool implements BinaryClassPool {
     private final BaseDexFileReader dexReader;
-    private boolean executed;
+    private final Map<String, byte[]> classData;
+    private boolean initialized;
 
-    public DexClassLoader(InputStream... sources) throws IOException {
-        this.dexReader = MultiDexFileReader.from(sources);
+    public DexClassPool(byte[] dexData) {
+        this.dexReader = new DexFileReader(dexData);
+        this.classData = new HashMap<>();
     }
 
     @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        if (this.executed) {
-            return super.findClass(name);
+    public byte[] getBinaryClass(String className) {
+        this.initialize();
+        return this.classData.get(className);
+    }
+
+    private void initialize() {
+        if (this.initialized) {
+            return;
         }
 
-        this.executed = true;
+        this.initialized = true;
 
         // TODO: Make this method more lightweight
 
@@ -48,8 +51,6 @@ public class DexClassLoader extends ClassLoader {
         } catch (Exception ex) {
             throw new IllegalStateException("Failed reading dex", ex);
         }
-
-        final Class[] result = new Class[1];
 
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
@@ -71,14 +72,7 @@ public class DexClassLoader extends ClassLoader {
                             throw new IllegalStateException("Failed generating byte code for " + className);
                         }
 
-                        // TODO: Maybe use a ProtectionDomain? (Missing security concept...)
-
-                        Class<?> definedClass = DexClassLoader.super.defineClass(className, data, 0, data.length);
-                        log.log(Level.INFO, "Defined class: {0}", className);
-
-                        if (name.equals(className)) {
-                            result[0] = definedClass;
-                        }
+                        DexClassPool.this.classData.put(className, data);
                     }
                 };
             }
@@ -127,11 +121,5 @@ public class DexClassLoader extends ClassLoader {
                 new IR2JConverter(true).convert(irMethod, mv);
             }
         }.convertDex(fileNode, cvf);
-
-        if (result[0] != null) {
-            return result[0];
-        }
-
-        return super.findClass(name);
     }
 }
