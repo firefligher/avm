@@ -34,7 +34,7 @@ public class Launcher {
         ClassLoader appClassLoader;
 
         try {
-            appClassLoader = app.getApkAccess().getClassLoader();
+            appClassLoader = app.getApkAccess().getClassLoader(settings.getCacheProvider());
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Cannot access the classes of the launched app", ex);
             return false;

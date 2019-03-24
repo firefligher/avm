@@ -45,10 +45,6 @@ public class ApkAccess {
         return this.zipFile.getInputStream(entry);
     }
 
-    public ClassLoader getClassLoader() throws IOException {
-        return this.getClassLoader(EmptyCacheProvider.INSTANCE);
-    }
-
     public ClassLoader getClassLoader(CacheProvider cacheProvider) throws IOException {
         // If the classLoader has been created already, use that instance.
 
