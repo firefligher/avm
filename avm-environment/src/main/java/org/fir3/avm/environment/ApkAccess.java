@@ -1,8 +1,12 @@
 package org.fir3.avm.environment;
 
 import lombok.Getter;
-import org.fir3.avm.environment.dalvik.DexClassLoader;
+import org.fir3.avm.environment.classloader.CachedClassLoader;
+import org.fir3.avm.environment.classloader.DexClassPool;
+import org.fir3.avm.environment.classloader.cache.Cache;
+import org.fir3.avm.environment.classloader.cache.EmptyCacheProvider;
 import org.fir3.avm.environment.util.MultiClassLoader;
+import org.fir3.avm.environment.util.StreamUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,7 +79,11 @@ public class ApkAccess {
 
             // Create the class loader for the entry
 
-            parent.addChild(new DexClassLoader(this.zipFile.getInputStream(entry)));
+            byte[] dexData = StreamUtil.readFully(this.zipFile.getInputStream(entry));
+            DexClassPool classPool = new DexClassPool(dexData);
+            Cache cache = EmptyCacheProvider.INSTANCE.getCache(dexData);
+
+            parent.addChild(new CachedClassLoader(classPool, cache));
         }
 
         return (this.classLoader = parent);

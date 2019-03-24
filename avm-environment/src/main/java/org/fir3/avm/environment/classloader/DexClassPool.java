@@ -1,4 +1,4 @@
-package org.fir3.avm.environment.dalvik;
+package org.fir3.avm.environment.classloader;
 
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.converter.IR2JConverter;
@@ -11,27 +11,28 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
 import com.googlecode.dex2jar.ir.IrMethod;
-import lombok.extern.java.Log;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
-@Log
-public class DexClassLoader extends ClassLoader {
+public class DexClassPool implements BinaryClassPool {
     private final BaseDexFileReader dexReader;
-    private final Map<String, Class<?>> definedClasses;
+    private final Map<String, byte[]> classData;
     private boolean initialized;
 
-    public DexClassLoader(InputStream source) throws IOException {
-        this.dexReader = new DexFileReader(source);
-        this.definedClasses = new HashMap<>();
+    public DexClassPool(byte[] dexData) {
+        this.dexReader = new DexFileReader(dexData);
+        this.classData = new HashMap<>();
+    }
+
+    @Override
+    public byte[] getBinaryClass(String className) {
+        this.initialize();
+        return this.classData.get(className);
     }
 
     private void initialize() {
@@ -71,12 +72,7 @@ public class DexClassLoader extends ClassLoader {
                             throw new IllegalStateException("Failed generating byte code for " + className);
                         }
 
-                        // TODO: Maybe use a ProtectionDomain? (Missing security concept...)
-
-                        DexClassLoader.this.definedClasses.put(className, DexClassLoader.super.defineClass(
-                                className, data, 0, data.length));
-
-                        log.log(Level.INFO, "Defined class: {0}", className);
+                        DexClassPool.this.classData.put(className, data);
                     }
                 };
             }
@@ -125,16 +121,5 @@ public class DexClassLoader extends ClassLoader {
                 new IR2JConverter(true).convert(irMethod, mv);
             }
         }.convertDex(fileNode, cvf);
-    }
-
-    @Override
-    protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        this.initialize();
-
-        if (this.definedClasses.containsKey(name)) {
-            return this.definedClasses.get(name);
-        }
-
-        return super.findClass(name);
     }
 }

@@ -1,5 +1,6 @@
 package org.fir3.avm.environment.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +8,23 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class StreamUtil {
+    public static byte[] readFully(InputStream src) throws IOException {
+        byte[] result;
+
+        try (ByteArrayOutputStream dst = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while ((length = src.read(buffer)) != -1) {
+                dst.write(buffer, 0, length);
+            }
+
+            result = dst.toByteArray();
+        }
+
+        return result;
+    }
+
     public static void readFully(InputStream src, byte[] dst) throws IOException {
         int offset = 0, bytes;
 
