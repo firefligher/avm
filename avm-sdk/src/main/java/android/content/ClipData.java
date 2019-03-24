@@ -5,15 +5,15 @@ import android.os.Parcelable;
 import lombok.extern.java.Log;
 
 @Log
-public class IntentFilter implements Parcelable {
+public class ClipData implements Parcelable {
     @Override
     public int describeContents() {
-        log.warning("android.content.IntentFilter.describeContents()");
+        log.warning("Unimplemented method: android.content.ClipData.describeContents()");
         return 0;
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        log.warning("android.content.IntentFilter.writeToParcel(android.os.Parcel, int)");
+        log.warning("Unimplemented method: android.content.ClipData.writeToParcel(android.os.Parcel, int)");
     }
 }
