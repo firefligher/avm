@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.fir3.avm.environment.classloader.CachedClassLoader;
 import org.fir3.avm.environment.classloader.DexClassPool;
 import org.fir3.avm.environment.classloader.cache.Cache;
+import org.fir3.avm.environment.classloader.cache.CacheProvider;
 import org.fir3.avm.environment.classloader.cache.EmptyCacheProvider;
 import org.fir3.avm.environment.util.MultiClassLoader;
 import org.fir3.avm.environment.util.StreamUtil;
@@ -43,6 +44,10 @@ public class ApkAccess {
     }
 
     public ClassLoader getClassLoader() throws IOException {
+        return this.getClassLoader(EmptyCacheProvider.INSTANCE);
+    }
+
+    public ClassLoader getClassLoader(CacheProvider cacheProvider) throws IOException {
         // If the classLoader has been created already, use that instance.
 
         if (this.classLoader != null) {
@@ -81,7 +86,7 @@ public class ApkAccess {
 
             byte[] dexData = StreamUtil.readFully(this.zipFile.getInputStream(entry));
             DexClassPool classPool = new DexClassPool(dexData);
-            Cache cache = EmptyCacheProvider.INSTANCE.getCache(dexData);
+            Cache cache = cacheProvider.getCache(dexData);
 
             parent.addChild(new CachedClassLoader(classPool, cache));
         }
